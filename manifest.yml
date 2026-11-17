@@ -1,0 +1,125 @@
+modules:
+  # 1. Jira Project Page (Release Readiness Command Center)
+  jira:projectPage:
+    - key: shipguard-release-dashboard
+      title: ShipGuard Release Sentinel
+      resource: main-ui
+      resolver:
+        function: ui-resolver
+
+  # 2. Jira Issue Panel (Blast Radius & Verification Receipts)
+  jira:issuePanel:
+    - key: shipguard-issue-panel
+      title: ShipGuard Context & Blast Radius
+      icon: https://cdn-icons-png.flaticon.com/512/3208/3208726.png
+      resource: main-ui
+      resolver:
+        function: ui-resolver
+
+  # 3. Rovo Assignable Agent (@ShipGuard)
+  rovo:agent:
+    - key: shipguard-sentinel-agent
+      name: ShipGuard Sentinel
+      description: Autonomous release readiness, Teamwork Graph context auditor, and blast-radius calculator.
+      prompt: >
+        You are ShipGuard Sentinel, an autonomous engineering release auditor.
+        Your mission is to evaluate release readiness, detect missing architectural context,
+        and calculate deterministic blast-radius scores across the Atlassian Teamwork Graph.
+        
+        Strict Guardrails:
+        1. Never fabricate risk percentages or ticket statuses. All metrics must originate from invoked actions.
+        2. Every assessment must cite concrete 'Receipts' (Jira keys, Confluence page titles, PR diff IDs).
+        3. Clearly identify unlinked PRs, unreviewed schema changes, and out-of-office downstream service owners.
+        4. If the blast-radius score exceeds 65%, flag the release as BLOCKED and list actionable remediation steps.
+      actions:
+        - assess-release-readiness
+        - calculate-blast-radius
+        - scan-context-gaps
+        - post-readiness-receipt
+
+  # 4. Atlassian MCP Server (Exposes TWG & context to Cursor, Claude Code, etc.)
+  rovo:mcp:
+    - key: shipguard-mcp-server
+      name: ShipGuard MCP Context Engine
+      description: Model Context Protocol server exposing Teamwork Graph Cypher traversal and release context tools to external developer agents.
+      actions:
+        - assess-release-readiness
+        - calculate-blast-radius
+        - scan-context-gaps
+
+  # 5. Reusable Rovo Actions
+  action:
+    - key: assess-release-readiness
+      name: Assess Release Readiness
+      description: Traverses Teamwork Graph to audit version release readiness, blockers, and documentation gaps.
+      function: actionHandler
+      actionType: READ_ONLY
+      inputs:
+        releaseVersion:
+          title: Release Version / FixVersion
+          type: string
+          required: true
+          description: "Target version string, e.g. v2.4.0 or Release-2026-Q4"
+
+    - key: calculate-blast-radius
+      name: Calculate Blast Radius
+      description: Computes deterministic 0-100 blast radius score for a Jira issue and downstream service graph.
+      function: actionHandler
+      actionType: READ_ONLY
+      inputs:
+        issueKey:
+          title: Jira Issue Key
+          type: string
+          required: true
+          description: "Jira issue key to evaluate, e.g. PROJ-1042"
+
+    - key: scan-context-gaps
+      name: Scan Context Gaps
+      description: Audits Confluence architectural decision records (ADRs), runbooks, and linked PRs for missing context.
+      function: actionHandler
+      actionType: READ_ONLY
+      inputs:
+        issueKey:
+          title: Jira Issue Key
+          type: string
+          required: true
+
+    - key: post-readiness-receipt
+      name: Post Readiness Receipt
+      description: Posts a signed, cryptographic receipt note with blast-radius verification to the Jira issue or release.
+      function: actionHandler
+      actionType: UPDATE
+      inputs:
+        issueKey:
+          title: Jira Issue Key
+          type: string
+          required: true
+        receiptSummary:
+          title: Summary of Verification
+          type: string
+          required: true
+
+  # 6. Backend Lambda Functions
+  function:
+    - key: ui-resolver
+      handler: index.uiResolver
+    - key: actionHandler
+      handler: index.actionHandler
+
+resources:
+  - key: main-ui
+    path: static/frontend
+
+app:
+  id: ari:cloud:ecosystem::app/shipguard-sentinel-2026
+  runtime:
+    name: nodejs20.x
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - read:confluence-content.all
+    - read:confluence-space.summary
+    - read:graph:issue:jira
+    - read:graph:page:confluence

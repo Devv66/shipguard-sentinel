@@ -1,0 +1,34 @@
+{
+  "name": "shipguard-forge",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ShipGuard: Autonomous Release Readiness & Blast-Radius Sentinel for Atlassian Forge, Rovo, and Teamwork Graph",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/shipguard.test.mjs",
+    "forge:deploy": "forge deploy",
+    "forge:tunnel": "forge tunnel",
+    "forge:lint": "forge lint"
+  },
+  "keywords": [
+    "atlassian",
+    "forge",
+    "rovo",
+    "rovo-agent",
+    "mcp",
+    "teamwork-graph",
+    "codegeist-2026",
+    "jira",
+    "confluence"
+  ],
+  "author": "ShipGuard Team",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@forge/api": "^8.5.0",
+    "@forge/resolver": "^2.0.2"
+  },
+  "devDependencies": {
+    "@forge/bridge": "^7.3.0"
+  }
+}
